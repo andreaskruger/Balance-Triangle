@@ -1,24 +1,35 @@
-#include <Arduino.h>
-#include <IMU.h>
-#include <Motor.h>
-#include <PID.h>
+#include "Arduino.h"
+#include "IMUdata.h"
+#include "I2C_SCANNER.h"
+#include "PID.h"
+#include "Wire.h"
+#include "Motor_control.h"
 
+/*Defines*/
+#define system_runtime 20
 
-void setup() {
+void setup(){
   Serial.begin(115200);
-  motor_init();
-  IMU_init();
-  Serial.println("Setup done...");
-  delay(1000);
-  Serial.println("Starting loop...");
+  while (!Serial){delay(10); }
+  init_IMU();
+  PID_setProportional(1);
+  PID_setDerivate(1);
+  PID_setIntegral(1);
 }
 
-void loop() {
-  float angle = IMU_get_angle();
-  motor_speed(pid_calculate_speed(angle));
-  delay(10);
+void loop(){
+  readIMU();
+  float yaw = IMU_angle_get_yaw();
+  float pitch = IMU_angle_get_pitch();
+  float roll = IMU_angle_get_roll();
+  float speed = PID_angle(yaw);
+  //float speed = PID_angle(pitch);
+  //float speed = PID_angle(roll);
+
+  if (abs(speed)>10)
+    motor_speed(speed);
+  else
+    motor_break();
+  
 }
-
-
-
-
+  
